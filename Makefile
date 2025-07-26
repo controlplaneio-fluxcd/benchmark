@@ -11,12 +11,12 @@ SHELL = /usr/bin/env bash -o pipefail
 # Number of objects to generate for the benchmarks.
 COUNT ?= 100
 
-.PHONY: gen-resources
-gen-resources: ## Generate and apply Flux resources for the benchmarks.
+.PHONY: benchmark
+benchmark: ## Generate and apply Flux resources for the benchmarks.
 	./scripts/rset-gen.sh $(COUNT)
 
-.PHONY: del-resources
-del-resources: ## Delete all generated resources.
+.PHONY: clean
+clean: ## Delete all generated resources.
 	kubectl -n benchmark delete rset -l app.kubernetes.io/component=benchmark
 
 ##@ CRDs

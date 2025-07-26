@@ -16,6 +16,9 @@ spec:
       selector:
         matchLabels:
           app.kubernetes.io/component: benchmark
+  commonMetadata:
+    labels:
+      sharding.fluxcd.io/key: apps
   resourcesTemplate: |
     apiVersion: source.toolkit.fluxcd.io/v1
     kind: OCIRepository

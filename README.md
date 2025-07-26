@@ -7,5 +7,11 @@ Running the benchmark requires a Kubernetes cluster with Flux Operator installed
 Generate 1K HelmReleases and 1K Kustomizations in the benchmark namespace:
 
 ```shell
-COUNT=1000 make gen-resources
+COUNT=1000 make benchmark
+```
+
+To remove the benchmark resources, run:
+
+```shell
+make clean
 ```
