@@ -1,0 +1,75 @@
+---
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: helmreleases
+  namespace: benchmark
+  labels:
+    app.kubernetes.io/component: benchmark
+  annotations:
+    fluxcd.controlplane.io/reconcileEvery: "15m"
+    fluxcd.controlplane.io/reconcileTimeout: "10m"
+spec:
+  wait: true
+  inputsFrom:
+    - kind: ResourceSetInputProvider
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: benchmark
+  resourcesTemplate: |
+    apiVersion: source.toolkit.fluxcd.io/v1
+    kind: OCIRepository
+    metadata:
+      name: podinfo-chart
+      namespace: << inputs.provider.namespace >>
+    spec:
+      interval: 1h
+      url: oci://ghcr.io/stefanprodan/charts/podinfo
+      # Default values
+      # https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml
+      ref:
+        semver: 6.8.0
+    <<- range $i := until (int inputs.objects) >>
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: podinfo-values-<< add $i 1 >>
+      namespace: << inputs.provider.namespace >>
+    data:
+      values.yaml: |
+        ui:
+          color: "<< inputs.ui.color >>"
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: podinfo-secret-<< add $i 1 >>
+      namespace: << inputs.provider.namespace >>
+    type: Opaque
+    stringData:
+      values.yaml: |
+        ui:
+          message: "<< inputs.ui.message >>"
+    ---
+    apiVersion: helm.toolkit.fluxcd.io/v2
+    kind: HelmRelease
+    metadata:
+      name: podinfo-<< add $i 1 >>
+      namespace: << inputs.provider.namespace >>
+    spec:
+      serviceAccountName: flux-operator
+      chartRef:
+        kind: OCIRepository
+        name: podinfo-chart
+      interval: 5m
+      driftDetection:
+        mode: enabled
+      values:
+        replicaCount: 0
+      valuesFrom:
+      - kind: ConfigMap
+        name: podinfo-values-<< add $i 1 >>
+      - kind: Secret
+        name: podinfo-secret-<< add $i 1 >>
+    <<- end >>

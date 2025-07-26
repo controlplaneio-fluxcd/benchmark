@@ -1,0 +1,62 @@
+---
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: kustomizations
+  namespace: benchmark
+  labels:
+    app.kubernetes.io/component: benchmark
+  annotations:
+    fluxcd.controlplane.io/reconcileEvery: "15m"
+    fluxcd.controlplane.io/reconcileTimeout: "10m"
+spec:
+  wait: true
+  inputsFrom:
+    - kind: ResourceSetInputProvider
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: benchmark
+  resourcesTemplate: |
+    apiVersion: source.toolkit.fluxcd.io/v1
+    kind: OCIRepository
+    metadata:
+      name: app-manifests
+      namespace: << inputs.provider.namespace >>
+    spec:
+      interval: 1h
+      url: oci://ghcr.io/stefanprodan/manifests/podinfo
+      ref:
+        tag: latest
+    <<- range $i := until (int inputs.objects) >>
+    ---
+    apiVersion: kustomize.toolkit.fluxcd.io/v1
+    kind: Kustomization
+    metadata:
+      name: app-<< add $i 1 >>
+      namespace: << inputs.provider.namespace >>
+    spec:
+      targetNamespace: << inputs.provider.namespace >>
+      serviceAccountName: flux-operator
+      interval: 5m
+      retryInterval: 5m
+      timeout: 5m
+      prune: true
+      wait: true
+      namePrefix: app-<< add $i 1 >>-
+      path: ./
+      sourceRef:
+        kind: OCIRepository
+        name: app-manifests
+      patches:
+        - target:
+            kind: Deployment
+          patch: |-
+            - op: add
+              path: /spec/replicas
+              value: 0
+            - op: add
+              path: /spec/template/spec/containers/0/env/-
+              value:
+                name: PODINFO_UI_MESSAGE
+                value: "<< inputs.ui.message >>"
+    <<- end >>

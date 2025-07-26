@@ -1,0 +1,15 @@
+---
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSetInputProvider
+metadata:
+  name: input
+  namespace: benchmark
+  labels:
+    app.kubernetes.io/component: benchmark
+spec:
+  type: Static
+  defaultValues:
+    objects: 1000
+    ui:
+      color: "#ff006fff"
+      message: "benchmark-placeholder"
