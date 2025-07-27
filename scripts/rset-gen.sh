@@ -6,6 +6,7 @@
 set -euo pipefail
 
 OBJ_COUNT=$1
+TIMEOUT=${2:-10m}
 
 repo_root=$(git rev-parse --show-toplevel)
 srcdir="$repo_root/kubernetes/benchmark"
@@ -29,17 +30,19 @@ kubectl apply --server-side -f "$tmpdir/namespace.yaml" > /dev/null
 
 info "Generating ResourceSets with $OBJ_COUNT objects..."
 timestamp=$(date +%s)
-sed "s/1000/$OBJ_COUNT/;s/benchmark-placeholder/$timestamp/" "$srcdir/input.yaml" > "$tmpdir/input.yaml"
+sed "s/100/$OBJ_COUNT/;s/benchmark-placeholder/$timestamp/" "$srcdir/input.yaml" > "$tmpdir/input.yaml"
 
 info "Applying ResourceSets to the cluster..."
 kubectl apply --server-side -f "$tmpdir/" > /dev/null
 
-info "Waiting for ResourceSets to become ready..."
-for rset in $(kubectl get rset -n benchmark -o name | cut -d/ -f2); do
-  kubectl -n benchmark wait rset/$rset --for=condition=ready --timeout=10m
-done
-
 info "Cleaning up temporary files..."
 rm -rf "$tmpdir"
+
+info "Waiting for ResourceSets to become ready..."
+for rset in $(kubectl get rset -n benchmark -o name | cut -d/ -f2); do
+  kubectl -n benchmark wait rset/$rset --for=condition=ready --timeout="$TIMEOUT" > /dev/null || {
+    fatal "ResourceSet $rset did not become ready within the timeout period."
+  }
+done
 
 info "ResourceSets successfully applied in $(( $(date +%s) - $start ))sec"

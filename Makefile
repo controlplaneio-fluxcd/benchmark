@@ -6,20 +6,33 @@
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
-##@ Resources
+##@ Provisioning
 
-# Number of objects to generate for the benchmarks.
+# Number of objects to generate for the benchmark.
 COUNT ?= 100
 
+# Timeout for the benchmark operations.
+TIMEOUT ?= 10m
+
 .PHONY: benchmark
-benchmark: ## Generate and apply Flux resources for the benchmarks.
-	./scripts/rset-gen.sh $(COUNT)
+benchmark: ## Generate and apply resources in the benchmark namespace.
+	./scripts/rset-gen.sh $(COUNT) $(TIMEOUT)
 
 .PHONY: clean
-clean: ## Delete all generated resources.
+clean: ## Delete all generated resources in the benchmark namespace.
 	kubectl -n benchmark delete rset -l app.kubernetes.io/component=benchmark
 
-##@ CRDs
+###@ Reconciliation
+
+.PHONY: reconcile-ks
+reconcile-ks: ## Reconcile Kustomizations in the benchmark namespace.
+	./scripts/ks-reconcile.sh $(COUNT)
+
+.PHONY: reconcile-hr
+reconcile-hr: ## Reconcile HelmReleases in the benchmark namespace.
+	./scripts/hr-reconcile.sh $(COUNT)
+
+##@ Provisioning CRDs
 
 # Number of CRDs to generate for the benchmarks.
 CRD_COUNT ?= 100
