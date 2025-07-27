@@ -1,0 +1,75 @@
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+spec:
+  distribution:
+    version: 2.x
+    registry: ghcr.io/fluxcd
+  components:
+    - source-controller
+    - kustomize-controller
+    - helm-controller
+    - notification-controller
+  cluster:
+    type: kubernetes
+    multitenant: true
+    tenantDefaultServiceAccount: flux
+    networkPolicy: true
+    domain: "cluster.local"
+  sharding:
+    key: "sharding.fluxcd.io/key"
+    shards:
+      - "apps"
+  kustomize:
+    patches:
+      - target:
+          kind: Deployment
+          name: "(kustomize-controller|helm-controller)"
+        patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --concurrent=10
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --requeue-dependency=10s
+          - op: replace
+            path: /spec/template/spec/containers/0/resources
+            value:
+              requests:
+                cpu: 100m
+                memory: 250Mi
+              limits:
+                cpu: 2000m
+                memory: 2Gi
+      - target:
+          kind:
+            Deployment
+        patch: |
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: all
+          spec:
+            template:
+              metadata:
+                labels:
+                  app.kubernetes.io/part-of: flux
+                annotations:
+                  cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+              spec:
+                affinity:
+                  nodeAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                      nodeSelectorTerms:
+                        - matchExpressions:
+                            - key: app.fluxcd.io/role
+                              operator: In
+                              values:
+                                - control-plane
+                tolerations:
+                  - effect: NoSchedule
+                    key: app.fluxcd.io/role
+                    operator: Equal
+                    value: control-plane
