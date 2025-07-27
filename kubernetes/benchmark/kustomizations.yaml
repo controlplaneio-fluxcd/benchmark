@@ -7,8 +7,9 @@ metadata:
   labels:
     app.kubernetes.io/component: benchmark
   annotations:
-    fluxcd.controlplane.io/reconcileEvery: "15m"
-    fluxcd.controlplane.io/reconcileTimeout: "10m"
+    fluxcd.controlplane.io/reconcileEvery: 1h
+    fluxcd.controlplane.io/reconcileTimeout: 10m
+    fluxcd.controlplane.io/reconcile: enabled
 spec:
   wait: true
   inputsFrom:
@@ -23,7 +24,7 @@ spec:
     apiVersion: source.toolkit.fluxcd.io/v1
     kind: OCIRepository
     metadata:
-      name: app-manifests
+      name: ksapp-manifests
       namespace: << inputs.provider.namespace >>
     spec:
       interval: 1h
@@ -35,25 +36,37 @@ spec:
     apiVersion: kustomize.toolkit.fluxcd.io/v1
     kind: Kustomization
     metadata:
-      name: app-<< add $i 1 >>
+      name: ksapp-<< add $i 1 >>
       namespace: << inputs.provider.namespace >>
     spec:
+      interval: 15m
+      wait: true
       targetNamespace: << inputs.provider.namespace >>
       serviceAccountName: flux-operator
-      interval: 5m
       retryInterval: 5m
-      timeout: 5m
+      timeout: 3m
       prune: true
-      wait: true
-      namePrefix: app-<< add $i 1 >>-
+      namePrefix: ksapp-<< add $i 1 >>-
       path: ./
       sourceRef:
         kind: OCIRepository
-        name: app-manifests
+        name: ksapp-manifests
       patches:
+        - target:
+            kind: Service
+          patch: |-
+            - op: replace
+              path: /spec/selector/app
+              value: ksapp-<< add $i 1 >>-podinfo
         - target:
             kind: Deployment
           patch: |-
+            - op: replace
+              path: /spec/selector/matchLabels/app
+              value: ksapp-<< add $i 1 >>-podinfo
+            - op: replace
+              path: /spec/template/metadata/labels/app
+              value: ksapp-<< add $i 1 >>-podinfo
             - op: add
               path: /spec/replicas
               value: 0

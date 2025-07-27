@@ -9,7 +9,6 @@ metadata:
 spec:
   type: Static
   defaultValues:
-    objects: 1000
+    objects: 100
     ui:
-      color: "#ff006fff"
       message: "benchmark-placeholder"
