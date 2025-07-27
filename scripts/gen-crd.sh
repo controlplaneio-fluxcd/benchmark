@@ -8,7 +8,7 @@ set -euo pipefail
 CRD_COUNT=$1
 
 repo_root=$(git rev-parse --show-toplevel)
-template_file="$repo_root/scripts/crd.yaml.tmpl"
+template_file="$repo_root/scripts/crd.template.yaml"
 tmpdir="${repo_root}/bin/crds"
 
 info() {

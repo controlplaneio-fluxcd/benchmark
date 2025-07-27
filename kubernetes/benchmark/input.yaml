@@ -12,3 +12,4 @@ spec:
     objects: 100
     ui:
       message: "benchmark-placeholder"
+      color: "#34577c"

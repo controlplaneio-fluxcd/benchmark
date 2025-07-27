@@ -33,6 +33,14 @@ spec:
         tag: latest
     <<- range $i := until (int inputs.objects) >>
     ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: ksapp-vars-<< add $i 1 >>
+      namespace: << inputs.provider.namespace >>
+    data:
+      color: "<< inputs.ui.color >>"
+    ---
     apiVersion: kustomize.toolkit.fluxcd.io/v1
     kind: Kustomization
     metadata:
@@ -51,6 +59,10 @@ spec:
       sourceRef:
         kind: OCIRepository
         name: ksapp-manifests
+      postBuild:
+        substituteFrom:
+          - kind: ConfigMap
+            name: ksapp-vars-<< add $i 1 >>
       patches:
         - target:
             kind: Service

@@ -1152,7 +1152,7 @@
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -1167,7 +1167,7 @@
               }
             ]
           },
-          "unit": "none"
+          "unit": "Bps"
         },
         "overrides": []
       },
@@ -1177,7 +1177,7 @@
         "x": 0,
         "y": 27
       },
-      "id": 55,
+      "id": 64,
       "options": {
         "legend": {
           "calcs": [
@@ -1201,14 +1201,14 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "go_goroutines{namespace=\"$namespace\"}\n",
+          "expr": "sum(rate(container_network_transmit_bytes_total{namespace=\"$namespace\"}[5m])) by (pod)\n",
           "interval": "",
           "legendFormat": "{{pod}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Flux Goroutines by Controller",
+      "title": "Flux Outbound Traffic by Controller",
       "type": "timeseries"
     },
     {
@@ -1247,7 +1247,7 @@
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -1262,7 +1262,7 @@
               }
             ]
           },
-          "unit": "none"
+          "unit": "Bps"
         },
         "overrides": []
       },
@@ -1272,7 +1272,7 @@
         "x": 12,
         "y": 27
       },
-      "id": 56,
+      "id": 63,
       "options": {
         "legend": {
           "calcs": [
@@ -1296,14 +1296,14 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "process_open_fds{namespace=\"$namespace\"}\n",
+          "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"$namespace\"}[5m])) by (pod)\n",
           "interval": "",
           "legendFormat": "{{pod}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Flux Open File Descriptors by Controller",
+      "title": "Flux Inbound Traffic by Controller",
       "type": "timeseries"
     },
     {
@@ -1842,9 +1842,7 @@
           ],
           "displayMode": "table",
           "placement": "bottom",
-          "showLegend": true,
-          "sortBy": "Mean",
-          "sortDesc": false
+          "showLegend": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1948,9 +1946,7 @@
           ],
           "displayMode": "table",
           "placement": "bottom",
-          "showLegend": true,
-          "sortBy": "Mean",
-          "sortDesc": false
+          "showLegend": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -2954,13 +2950,13 @@
           },
           {
             "selected": false,
-            "text": "default",
-            "value": "default"
+            "text": "kube-system",
+            "value": "kube-system"
           },
           {
             "selected": false,
-            "text": "kube-system",
-            "value": "kube-system"
+            "text": "default",
+            "value": "default"
           }
         ],
         "query": {
@@ -2993,5 +2989,5 @@
   "timezone": "",
   "title": "Flux Operator Performance",
   "uid": "flux-control-plane-new",
-  "version": 6
+  "version": 7
 }

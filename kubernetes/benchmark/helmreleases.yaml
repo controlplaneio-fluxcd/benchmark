@@ -41,7 +41,7 @@ spec:
     data:
       values.yaml: |
         ui:
-          message: "<< inputs.ui.message >>"
+          color: "<< inputs.ui.color >>"
     ---
     apiVersion: helm.toolkit.fluxcd.io/v2
     kind: HelmRelease
@@ -58,6 +58,8 @@ spec:
         mode: enabled
       values:
         replicaCount: 0
+        ui:
+          message: "<< inputs.ui.message >>"
       valuesFrom:
       - kind: ConfigMap
         name: hrapp-values-<< add $i 1 >>

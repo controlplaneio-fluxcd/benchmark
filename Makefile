@@ -12,11 +12,11 @@ SHELL = /usr/bin/env bash -o pipefail
 COUNT ?= 100
 
 # Timeout for the benchmark operations.
-TIMEOUT ?= 10m
+TIMEOUT ?= 20m
 
 .PHONY: benchmark
 benchmark: ## Generate and apply resources in the benchmark namespace.
-	./scripts/rset-gen.sh $(COUNT) $(TIMEOUT)
+	./scripts/gen-rset.sh $(COUNT) $(TIMEOUT)
 
 .PHONY: clean
 clean: ## Delete all generated resources in the benchmark namespace.
@@ -26,23 +26,23 @@ clean: ## Delete all generated resources in the benchmark namespace.
 
 .PHONY: reconcile-ks
 reconcile-ks: ## Reconcile Kustomizations in the benchmark namespace.
-	./scripts/ks-reconcile.sh $(COUNT)
+	./scripts/reconcile-ks.sh $(COUNT)
 
 .PHONY: reconcile-hr
 reconcile-hr: ## Reconcile HelmReleases in the benchmark namespace.
-	./scripts/hr-reconcile.sh $(COUNT)
+	./scripts/reconcile-hr.sh $(COUNT)
 
 ##@ Provisioning CRDs
 
 # Number of CRDs to generate for the benchmarks.
 CRD_COUNT ?= 100
 
-.PHONY: gen-crds
-gen-crds: ## Generate and apply CRDs for the benchmarks.
-	./scripts/crd-gen.sh $(CRD_COUNT)
+.PHONY: crds
+crds: ## Generate and apply CRDs for the benchmarks.
+	./scripts/gen-crd.sh $(CRD_COUNT)
 
-.PHONY: del-crds
-del-crds: ## Delete all generated CRDs.
+.PHONY: clean-crds
+clean-crds: ## Delete all generated CRDs.
 	kubectl delete crd -l app.kubernetes.io/component=benchmark
 
 ##@ General

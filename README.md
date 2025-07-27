@@ -29,6 +29,18 @@ To trigger a reconciliation of the benchmark resources, run:
 COUNT=100 make reconcile-ks reconcile-hr
 ```
 
+To generate load on the Kubernetes API server, create CRDs with:
+
+```shell
+CRD_COUNT=100 make crds
+```
+
+To remove the generated CRDs, run:
+
+```shell
+make clean-crds
+```
+
 To remove the benchmark resources, run:
 
 ```shell
