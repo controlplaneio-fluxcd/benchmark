@@ -7,11 +7,11 @@ metadata:
   labels:
     app.kubernetes.io/component: benchmark
   annotations:
-    fluxcd.controlplane.io/reconcileEvery: 1h
-    fluxcd.controlplane.io/reconcileTimeout: 10m
+    fluxcd.controlplane.io/reconcileEvery: 12h
+    fluxcd.controlplane.io/reconcileTimeout: 20m
     fluxcd.controlplane.io/reconcile: enabled
 spec:
-  wait: true
+  wait: false
   inputsFrom:
     - kind: ResourceSetInputProvider
       selector:
@@ -30,13 +30,26 @@ spec:
       interval: 1h
       url: oci://ghcr.io/stefanprodan/manifests/podinfo
       ref:
-        tag: latest
+        semver: "<< inputs.version >>"
+    ---
+    apiVersion: source.toolkit.fluxcd.io/v1
+    kind: OCIRepository
+    metadata:
+      name: ksapp-manifests-canary
+      namespace: << inputs.provider.namespace >>
+    spec:
+      interval: 1h
+      url: oci://ghcr.io/stefanprodan/manifests/podinfo
+      ref:
+        semver: "<< inputs.canaryVersion >>"
     <<- range $i := until (int inputs.objects) >>
+    <<- $id := add $i 1 >>
+    <<- $name := printf "ksapp-%04d" $id >>
     ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      name: ksapp-vars-<< add $i 1 >>
+      name: << $name >>
       namespace: << inputs.provider.namespace >>
     data:
       color: "<< inputs.ui.color >>"
@@ -44,41 +57,41 @@ spec:
     apiVersion: kustomize.toolkit.fluxcd.io/v1
     kind: Kustomization
     metadata:
-      name: ksapp-<< add $i 1 >>
+      name: << $name >>
       namespace: << inputs.provider.namespace >>
     spec:
-      interval: 15m
+      interval: << inputs.interval | quote >>
       wait: true
       targetNamespace: << inputs.provider.namespace >>
       serviceAccountName: flux-operator
       retryInterval: 5m
       timeout: 3m
       prune: true
-      namePrefix: ksapp-<< add $i 1 >>-
+      namePrefix: << $name >>-
       path: ./
       sourceRef:
         kind: OCIRepository
-        name: ksapp-manifests
+        name: << if lt $i 50 >>ksapp-manifests-canary<< else >>ksapp-manifests<< end >>
       postBuild:
         substituteFrom:
           - kind: ConfigMap
-            name: ksapp-vars-<< add $i 1 >>
+            name: << $name >>
       patches:
         - target:
             kind: Service
           patch: |-
             - op: replace
               path: /spec/selector/app
-              value: ksapp-<< add $i 1 >>-podinfo
+              value: << $name >>-podinfo
         - target:
             kind: Deployment
           patch: |-
             - op: replace
               path: /spec/selector/matchLabels/app
-              value: ksapp-<< add $i 1 >>-podinfo
+              value: << $name >>-podinfo
             - op: replace
               path: /spec/template/metadata/labels/app
-              value: ksapp-<< add $i 1 >>-podinfo
+              value: << $name >>-podinfo
             - op: add
               path: /spec/replicas
               value: 0

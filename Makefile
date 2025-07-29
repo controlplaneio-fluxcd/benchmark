@@ -14,13 +14,27 @@ COUNT ?= 100
 # Timeout for the benchmark operations.
 TIMEOUT ?= 20m
 
+# Interval for the benchmark operations.
+INTERVAL ?= 30m
+
+# Canary version for the benchmark operations.
+VER ?= 6.9.0
+
 .PHONY: benchmark
 benchmark: ## Generate and apply resources in the benchmark namespace.
 	./scripts/gen-rset.sh $(COUNT) $(TIMEOUT)
 
 .PHONY: clean
 clean: ## Delete all generated resources in the benchmark namespace.
-	kubectl -n benchmark delete rset -l app.kubernetes.io/component=benchmark
+	@kubectl -n benchmark delete rset -l app.kubernetes.io/component=benchmark
+
+.PHONY: set-interval
+set-interval: ## Set the interval for the benchmark input provider.
+	@kubectl -n benchmark patch resourcesetinputprovider input --type='merge' -p='{"spec":{"defaultValues":{"interval":"$(INTERVAL)"}}}'
+
+.PHONY: set-version
+set-version: ## Change the version for the canary sources in the benchmark namespace.
+	@kubectl -n benchmark patch resourcesetinputprovider input --type='merge' -p='{"spec":{"defaultValues":{"canaryVersion":"$(VER)"}}}'
 
 ###@ Reconciliation
 

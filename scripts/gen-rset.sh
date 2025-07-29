@@ -33,7 +33,7 @@ timestamp=$(date +%s)
 sed "s/100/$OBJ_COUNT/;s/benchmark-placeholder/$timestamp/" "$srcdir/input.yaml" > "$tmpdir/input.yaml"
 
 info "Applying ResourceSets to the cluster..."
-kubectl apply --server-side -f "$tmpdir/" > /dev/null
+kubectl apply --server-side --force-conflicts -f "$tmpdir/" > /dev/null
 
 info "Cleaning up temporary files..."
 rm -rf "$tmpdir"
@@ -41,8 +41,18 @@ rm -rf "$tmpdir"
 info "Waiting for ResourceSets to become ready..."
 for rset in $(kubectl get rset -n benchmark -o name | cut -d/ -f2); do
   kubectl -n benchmark wait rset/$rset --for=condition=ready --timeout="$TIMEOUT" > /dev/null || {
-    fatal "ResourceSet $rset did not become ready within the timeout period."
+    fatal "ResourceSet $rset did not become ready within the $TIMEOUT period."
   }
 done
 
-info "ResourceSets successfully applied in $(( $(date +%s) - $start ))sec"
+kubectl wait -n benchmark --for=condition=ready hr $(printf "hrapp-%04d" "$OBJ_COUNT") \
+--timeout="$TIMEOUT"  > /dev/null || {
+  fatal "HelmRelease did not become ready within the $TIMEOUT period."
+}
+
+kubectl wait -n benchmark --for=condition=ready ks $(printf "ksapp-%04d" "$OBJ_COUNT") \
+--timeout="$TIMEOUT"  > /dev/null || {
+  fatal "Kustomization did not become ready within the $TIMEOUT period."
+}
+
+info "Benchmark successfully applied in $(( $(date +%s) - $start ))sec"

@@ -24,7 +24,7 @@
           "type": "datasource",
           "uid": "grafana"
         },
-        "enable": true,
+        "enable": false,
         "hide": false,
         "iconColor": "red",
         "name": "flux events",
@@ -68,8 +68,82 @@
       },
       "gridPos": {
         "h": 2,
-        "w": 18,
+        "w": 12,
         "x": 0,
+        "y": 0
+      },
+      "id": 68,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "name",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "topk(1, flux_operator_info)",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "Flux Operator {{version}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^([^@]+)@.*",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "fieldMinMax": false,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 6,
+        "x": 12,
         "y": 0
       },
       "id": 34,
@@ -334,7 +408,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "sum(workqueue_depth{namespace=\"$namespace\"})",
+          "expr": "sum(workqueue_depth{namespace=\"$namespace\",pod=~\".*controller.*\"})",
           "interval": "",
           "legendFormat": "reconciliations",
           "range": true,
@@ -397,7 +471,9 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "count(flux_resource_info) + count(flux_resourceset_info)",
+          "exemplar": false,
+          "expr": "count(flux_resource_info)",
+          "instant": false,
           "interval": "",
           "legendFormat": "resources",
           "range": true,
@@ -538,7 +614,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "max(rate(controller_runtime_reconcile_time_seconds_sum{namespace=\"$namespace\"}[15m]) / rate(controller_runtime_reconcile_time_seconds_count{namespace=\"$namespace\"}[15m]))\n\n",
+          "expr": "max(rate(controller_runtime_reconcile_time_seconds_sum{namespace=\"$namespace\",pod=~\".*controller.*\"}[15m]) / rate(controller_runtime_reconcile_time_seconds_count{namespace=\"$namespace\",pod=~\".*controller.*\"}[15m]))",
           "hide": false,
           "interval": "",
           "legendFormat": "seconds",
@@ -609,7 +685,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "max(workqueue_longest_running_processor_seconds{namespace=\"$namespace\"})",
+          "expr": "max(workqueue_longest_running_processor_seconds{namespace=\"$namespace\",pod=~\".*controller.*\"})",
           "hide": false,
           "interval": "",
           "legendFormat": "seconds",
@@ -2040,216 +2116,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 11,
-        "w": 12,
-        "x": 0,
-        "y": 68
-      },
-      "id": 33,
-      "options": {
-        "legend": {
-          "calcs": [
-            "mean",
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "datasource": {
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "disableTextWrap": false,
-          "editorMode": "code",
-          "expr": "sum(rate(rest_client_requests_total{namespace=\"$namespace\"}[5m])) by (pod)",
-          "fullMetaSearch": false,
-          "hide": false,
-          "includeNullMetadata": true,
-          "interval": "",
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "A",
-          "useBackend": false
-        }
-      ],
-      "title": "Flux API Requests by Controller",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 11,
-        "w": 12,
-        "x": 12,
-        "y": 68
-      },
-      "id": 35,
-      "options": {
-        "legend": {
-          "calcs": [
-            "mean",
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "datasource": {
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "expr": "sum(rate(rest_client_requests_total{namespace=\"$namespace\"}[5m])) by (method)",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Flux API Requests by Method ",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 79
+        "y": 68
       },
       "id": 21,
       "options": {
@@ -2362,7 +2232,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 79
+        "y": 68
       },
       "id": 36,
       "options": {
@@ -2469,9 +2339,9 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 18,
+        "w": 15,
         "x": 0,
-        "y": 86
+        "y": 75
       },
       "id": 57,
       "options": {
@@ -2517,6 +2387,77 @@
       "description": "",
       "fieldConfig": {
         "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue"
+              },
+              {
+                "color": "#EAB839",
+                "value": 5000
+              },
+              {
+                "color": "red",
+                "value": 10000
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 5,
+        "x": 15,
+        "y": 75
+      },
+      "id": 66,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max(rate(controller_runtime_reconcile_time_seconds_sum{namespace=\"$namespace\",pod=~\".*operator.*\"}[5m]) / rate(controller_runtime_reconcile_time_seconds_count{namespace=\"$namespace\",pod=~\".*operator.*\"}[5m]))\n\n",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "seconds",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Operator Reconcile Duration",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
           "decimals": 0,
           "mappings": [],
           "noValue": "0",
@@ -2534,14 +2475,14 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 6,
-        "x": 18,
-        "y": 86
+        "w": 4,
+        "x": 20,
+        "y": 75
       },
       "id": 60,
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
         "percentChangeColorMode": "standard",
@@ -2567,10 +2508,10 @@
           "exemplar": false,
           "expr": "count(flux_resourceset_info)",
           "format": "time_series",
-          "instant": true,
+          "instant": false,
           "interval": "",
           "legendFormat": "resources",
-          "range": false,
+          "range": true,
           "refId": "A"
         }
       ],
@@ -2635,9 +2576,9 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 18,
+        "w": 15,
         "x": 0,
-        "y": 92
+        "y": 81
       },
       "id": 58,
       "options": {
@@ -2683,6 +2624,77 @@
       "description": "",
       "fieldConfig": {
         "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue"
+              },
+              {
+                "color": "#EAB839",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 5,
+        "x": 15,
+        "y": 81
+      },
+      "id": 65,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max(rate(controller_runtime_reconcile_time_seconds_sum{namespace=\"$namespace\",pod=~\".*kustomize.*\"}[5m]) / rate(controller_runtime_reconcile_time_seconds_count{namespace=\"$namespace\",pod=~\".*kustomize.*\"}[5m]))\n\n",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "seconds",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Kustomize Reconcile Duration",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
           "color": {
             "mode": "thresholds"
           },
@@ -2701,14 +2713,14 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 6,
-        "x": 18,
-        "y": 92
+        "w": 4,
+        "x": 20,
+        "y": 81
       },
       "id": 61,
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
         "percentChangeColorMode": "standard",
@@ -2733,10 +2745,10 @@
           "exemplar": false,
           "expr": "count(flux_resource_info{kind=\"Kustomization\"})",
           "format": "time_series",
-          "instant": true,
+          "instant": false,
           "interval": "",
           "legendFormat": "resources",
-          "range": false,
+          "range": true,
           "refId": "A"
         }
       ],
@@ -2801,9 +2813,9 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 18,
+        "w": 15,
         "x": 0,
-        "y": 98
+        "y": 87
       },
       "id": 59,
       "options": {
@@ -2849,26 +2861,34 @@
       "description": "",
       "fieldConfig": {
         "defaults": {
-          "decimals": 0,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "blue"
+              },
+              {
+                "color": "#EAB839",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 100
               }
             ]
-          }
+          },
+          "unit": "s"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 6,
-        "w": 6,
-        "x": 18,
-        "y": 98
+        "w": 5,
+        "x": 15,
+        "y": 87
       },
-      "id": 62,
+      "id": 67,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
@@ -2894,13 +2914,76 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
+          "expr": "max(rate(controller_runtime_reconcile_time_seconds_sum{namespace=\"$namespace\",pod=~\".*helm.*\"}[5m]) / rate(controller_runtime_reconcile_time_seconds_count{namespace=\"$namespace\",pod=~\".*helm.*\"}[5m]))\n\n",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "seconds",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Helm Reconcile Duration",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 20,
+        "y": 87
+      },
+      "id": 62,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
           "exemplar": false,
           "expr": "count(flux_resource_info{kind=\"HelmRelease\"})",
           "format": "time_series",
-          "instant": true,
+          "instant": false,
           "interval": "",
           "legendFormat": "resources",
-          "range": false,
+          "range": true,
           "refId": "A"
         }
       ],
@@ -2989,5 +3072,5 @@
   "timezone": "",
   "title": "Flux Operator Performance",
   "uid": "flux-control-plane-new",
-  "version": 7
+  "version": 9
 }

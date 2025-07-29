@@ -30,7 +30,9 @@ do
 done
 
 info "Applying $CRD_COUNT CRDs to the cluster..."
-kubectl apply --server-side -f "$tmpdir/"
+kubectl apply --server-side -f "$tmpdir/" > /dev/null || {
+  fatal "Failed to apply CRDs. Please check the generated files in $tmpdir."
+}
 
 rm -rf "$tmpdir"
 

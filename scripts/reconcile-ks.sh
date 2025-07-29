@@ -24,9 +24,9 @@ fatal() {
 info "Triggering the reconciliation of ${OBJ_COUNT} Kustomizations..."
 
 for ((i=1; i<=OBJ_COUNT; i++)); do
-  kubectl -n benchmark annotate --field-manager=flux-client-side-apply \
-  --overwrite kustomization/ksapp-$i \
-  reconcile.fluxcd.io/requestedAt="$start" > /dev/null
+  flux-operator -n benchmark reconcile resource Kustomization/ksapp-$i --wait=false > /dev/null || {
+    fatal "Failed to reconcile Kustomization ksapp-$i"
+  }
 done
 
-info "Reconciliations triggered in $(( $(date +%s) - $start ))sec"
+info "Done in $(( $(date +%s) - $start ))sec"

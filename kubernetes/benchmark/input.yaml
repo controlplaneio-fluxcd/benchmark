@@ -10,6 +10,9 @@ spec:
   type: Static
   defaultValues:
     objects: 100
+    interval: 30m
+    version: 6.9.0
+    canaryVersion: 6.9.0
     ui:
       message: "benchmark-placeholder"
       color: "#34577c"

@@ -1,6 +1,6 @@
 # Flux Operator Benchmark
 
-Mean Time To Production benchmark for Flux Operator and the enterprise distribution.
+Mean Time To Production benchmark for [Flux Operator](https://github.com/controlplaneio-fluxcd/flux-operator) and the enterprise distribution.
 
 ## Prerequisites
 
@@ -15,6 +15,11 @@ The Grafana dashboards are available at:
 
 - [Monitoring configuration](kubernetes/monitoring/)
 
+The following CLI tools are required to run the benchmark:
+
+- [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- [flux-operator](https://fluxcd.control-plane.io/operator/cli/)
+
 ## Running the Benchmark
 
 Generate 1K HelmReleases and 1K Kustomizations in the benchmark namespace:
@@ -23,10 +28,12 @@ Generate 1K HelmReleases and 1K Kustomizations in the benchmark namespace:
 COUNT=1000 make benchmark
 ```
 
-To trigger a reconciliation of the benchmark resources, run:
+> Rerunning the benchmark will trigger an update of all existing HelmReleases and Kustomizations.
+
+To trigger an update of the first 50 HelmReleases and Kustomizations via OCIRepository semver change, run:
 
 ```shell
-COUNT=100 make reconcile-ks reconcile-hr
+VER=6.9.1 make set-version
 ```
 
 To generate load on the Kubernetes API server, create CRDs with:

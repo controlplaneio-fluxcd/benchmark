@@ -7,11 +7,11 @@ metadata:
   labels:
     app.kubernetes.io/component: benchmark
   annotations:
-    fluxcd.controlplane.io/reconcileEvery: 1h
-    fluxcd.controlplane.io/reconcileTimeout: 10m
+    fluxcd.controlplane.io/reconcileEvery: 12h
+    fluxcd.controlplane.io/reconcileTimeout: 20m
     fluxcd.controlplane.io/reconcile: enabled
 spec:
-  wait: true
+  wait: false
   inputsFrom:
     - kind: ResourceSetInputProvider
       selector:
@@ -30,13 +30,26 @@ spec:
       interval: 1h
       url: oci://ghcr.io/stefanprodan/charts/podinfo
       ref:
-        semver: 6.x
+        semver: << inputs.version >>
+    ---
+    apiVersion: source.toolkit.fluxcd.io/v1
+    kind: OCIRepository
+    metadata:
+      name: hrapp-chart-canary
+      namespace: << inputs.provider.namespace >>
+    spec:
+      interval: 1h
+      url: oci://ghcr.io/stefanprodan/charts/podinfo
+      ref:
+        semver: << inputs.canaryVersion >>
     <<- range $i := until (int inputs.objects) >>
+    <<- $id := add $i 1 >>
+    <<- $name := printf "hrapp-%04d" $id >>
     ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      name: hrapp-values-<< add $i 1 >>
+      name: << $name >>
       namespace: << inputs.provider.namespace >>
     data:
       values.yaml: |
@@ -46,14 +59,14 @@ spec:
     apiVersion: helm.toolkit.fluxcd.io/v2
     kind: HelmRelease
     metadata:
-      name: hrapp-<< add $i 1 >>
+      name: << $name >>
       namespace: << inputs.provider.namespace >>
     spec:
-      interval: 5m
+      interval: << inputs.interval | quote >>
       serviceAccountName: flux-operator
       chartRef:
         kind: OCIRepository
-        name: hrapp-chart
+        name: << if lt $i 50 >>hrapp-chart-canary<< else >>hrapp-chart<< end >>
       driftDetection:
         mode: enabled
       values:
@@ -62,5 +75,5 @@ spec:
           message: "<< inputs.ui.message >>"
       valuesFrom:
       - kind: ConfigMap
-        name: hrapp-values-<< add $i 1 >>
+        name: << $name >>
     <<- end >>

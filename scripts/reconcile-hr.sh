@@ -24,10 +24,9 @@ fatal() {
 info "Triggering the reconciliation of ${OBJ_COUNT} HelmReleases..."
 
 for ((i=1; i<=OBJ_COUNT; i++)); do
-  kubectl -n benchmark annotate --field-manager=flux-client-side-apply \
-  --overwrite helmrelease/hrapp-$i \
-  reconcile.fluxcd.io/requestedAt="$start" \
-  reconcile.fluxcd.io/forceAt="$start" > /dev/null
+  flux-operator -n benchmark reconcile resource HelmRelease/hrapp-$i --force > /dev/null || {
+    fatal "Failed to reconcile HelmRelease hrapp-$i"
+  }
 done
 
-info "Reconciliations triggered in $(( $(date +%s) - $start ))sec"
+info "Done in $(( $(date +%s) - $start ))sec"
