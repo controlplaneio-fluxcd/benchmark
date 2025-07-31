@@ -3,7 +3,8 @@ kind: Kustomization
 configMapGenerator:
   - name: flux-operator-dashboards
     files:
-      - dashboards/performance.json
+      - dashboards/flux-control-plane.json
+      - dashboards/flux-kubernetes-api.json
     options:
       labels:
         grafana_dashboard: "1"
