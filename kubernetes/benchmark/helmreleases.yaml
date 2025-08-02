@@ -71,6 +71,8 @@ spec:
         mode: enabled
       values:
         replicaCount: 0
+        serviceAccount:
+          enabled: true
         ui:
           message: "<< inputs.ui.message >>"
       valuesFrom:

@@ -15,7 +15,7 @@ COUNT ?= 100
 TIMEOUT ?= 20m
 
 # Interval for the benchmark operations.
-INTERVAL ?= 30m
+INTERVAL ?= 15m
 
 # Canary version for the benchmark operations.
 VER ?= 6.9.0
