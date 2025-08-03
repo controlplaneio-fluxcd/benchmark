@@ -30,7 +30,7 @@ spec:
         patch: |
           - op: add
             path: /spec/template/spec/containers/0/args/-
-            value: --concurrent=10
+            value: --concurrent=2
           - op: add
             path: /spec/template/spec/containers/0/args/-
             value: --requeue-dependency=10s
@@ -41,8 +41,8 @@ spec:
                 cpu: 100m
                 memory: 250Mi
               limits:
-                cpu: 2000m
-                memory: 2Gi
+                cpu: 1000m
+                memory: 512Mi
       - target:
           kind:
             Deployment
