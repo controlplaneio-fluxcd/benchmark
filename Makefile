@@ -17,8 +17,8 @@ TIMEOUT ?= 20m
 # Interval for the benchmark operations.
 INTERVAL ?= 15m
 
-# Canary version for the benchmark operations.
-VER ?= 6.9.0
+# Source version for the benchmark operations.
+VER ?= 6.9.1
 
 .PHONY: benchmark
 benchmark: ## Generate and apply resources in the benchmark namespace.
@@ -26,15 +26,19 @@ benchmark: ## Generate and apply resources in the benchmark namespace.
 
 .PHONY: clean
 clean: ## Delete all generated resources in the benchmark namespace.
-	@kubectl -n benchmark delete rset -l app.kubernetes.io/component=benchmark
+	@kubectl delete ns benchmark --ignore-not-found
 
 .PHONY: set-interval
 set-interval: ## Set the interval for the benchmark input provider.
 	@kubectl -n benchmark patch resourcesetinputprovider input --type='merge' -p='{"spec":{"defaultValues":{"interval":"$(INTERVAL)"}}}'
 
 .PHONY: set-version
-set-version: ## Change the version for the canary sources in the benchmark namespace.
-	@kubectl -n benchmark patch resourcesetinputprovider input --type='merge' -p='{"spec":{"defaultValues":{"canaryVersion":"$(VER)"}}}'
+set-version: ## Change the version for the sources in the benchmark namespace.
+	@kubectl -n benchmark patch resourcesetinputprovider input-sources --type='merge' -p='{"spec":{"defaultValues":{"version":"$(VER)"}}}'
+
+.PHONY: set-canary-version
+set-canary-version: ## Change the version for the canary sources in the benchmark namespace.
+	@kubectl -n benchmark patch resourcesetinputprovider input-sources --type='merge' -p='{"spec":{"defaultValues":{"canaryVersion":"$(VER)"}}}'
 
 ###@ Reconciliation
 

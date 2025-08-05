@@ -14,7 +14,7 @@ tmpdir="${repo_root}/bin/benchmark"
 start=$(date +%s)
 
 info() {
-    echo '[INFO] ' "$@"
+    echo "[INFO] [$(( $(date +%s) - $start ))s] " "$@"
 }
 
 fatal() {
@@ -45,6 +45,7 @@ for rset in $(kubectl get rset -n benchmark -o name | cut -d/ -f2); do
   }
 done
 
+info "Waiting for workloads to become ready..."
 kubectl wait -n benchmark --for=condition=ready hr $(printf "hrapp-%04d" "$OBJ_COUNT") \
 --timeout="$TIMEOUT"  > /dev/null || {
   fatal "HelmRelease did not become ready within the $TIMEOUT period."
@@ -55,4 +56,4 @@ kubectl wait -n benchmark --for=condition=ready ks $(printf "ksapp-%04d" "$OBJ_C
   fatal "Kustomization did not become ready within the $TIMEOUT period."
 }
 
-info "Benchmark successfully applied in $(( $(date +%s) - $start ))sec"
+info "Benchmark successfully applied"

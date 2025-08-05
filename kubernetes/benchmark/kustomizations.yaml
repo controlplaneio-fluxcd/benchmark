@@ -11,7 +11,14 @@ metadata:
     fluxcd.controlplane.io/reconcileTimeout: 20m
     fluxcd.controlplane.io/reconcile: enabled
 spec:
-  wait: false
+  wait: true
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: ResourceSet
+      name: sources
+      namespace: benchmark
+      ready: true
+      readyExpr: status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'True')
   inputsFrom:
     - kind: ResourceSetInputProvider
       selector:
@@ -21,27 +28,6 @@ spec:
     labels:
       sharding.fluxcd.io/key: apps
   resourcesTemplate: |
-    apiVersion: source.toolkit.fluxcd.io/v1
-    kind: OCIRepository
-    metadata:
-      name: ksapp-manifests
-      namespace: << inputs.provider.namespace >>
-    spec:
-      interval: 1h
-      url: oci://ghcr.io/stefanprodan/manifests/podinfo
-      ref:
-        semver: "<< inputs.version >>"
-    ---
-    apiVersion: source.toolkit.fluxcd.io/v1
-    kind: OCIRepository
-    metadata:
-      name: ksapp-manifests-canary
-      namespace: << inputs.provider.namespace >>
-    spec:
-      interval: 1h
-      url: oci://ghcr.io/stefanprodan/manifests/podinfo
-      ref:
-        semver: "<< inputs.canaryVersion >>"
     <<- range $i := until (int inputs.objects) >>
     <<- $id := add $i 1 >>
     <<- $name := printf "ksapp-%04d" $id >>
@@ -83,9 +69,23 @@ spec:
             - op: replace
               path: /spec/selector/app
               value: << $name >>-podinfo
+    <<- if gt inputs.replicaCount 0 >>
+        - target:
+            kind: HorizontalPodAutoscaler
+          patch: |-
+            - op: replace
+              path: /spec/minReplicas
+              value: << inputs.replicaCount | int >>
+            - op: replace
+              path: /spec/maxReplicas
+              value: << inputs.replicaCount | int >>
+    <<- end >>
         - target:
             kind: Deployment
           patch: |-
+            - op: add
+              path: /spec/replicas
+              value: << inputs.replicaCount | int >>
             - op: replace
               path: /spec/selector/matchLabels/app
               value: << $name >>-podinfo
@@ -93,11 +93,32 @@ spec:
               path: /spec/template/metadata/labels/app
               value: << $name >>-podinfo
             - op: add
-              path: /spec/replicas
-              value: 0
-            - op: add
               path: /spec/template/spec/containers/0/env/-
               value:
                 name: PODINFO_UI_MESSAGE
                 value: "<< inputs.ui.message >>"
+            - op: replace
+              path: /spec/template/spec/containers/0/resources
+              value:
+                requests:
+                  cpu: 1m
+                  memory: 16Mi
+            - op: add
+              path: /spec/template/spec/affinity
+              value:
+                nodeAffinity:
+                  requiredDuringSchedulingIgnoredDuringExecution:
+                    nodeSelectorTerms:
+                      - matchExpressions:
+                          - key: app.fluxcd.io/role
+                            operator: In
+                            values:
+                              - benchmark
+            - op: add
+              path: /spec/template/spec/tolerations
+              value:
+                - effect: NoSchedule
+                  key: app.fluxcd.io/role
+                  operator: Equal
+                  value: benchmark
     <<- end >>

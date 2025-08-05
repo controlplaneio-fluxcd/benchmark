@@ -11,7 +11,14 @@ metadata:
     fluxcd.controlplane.io/reconcileTimeout: 20m
     fluxcd.controlplane.io/reconcile: enabled
 spec:
-  wait: false
+  wait: true
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: ResourceSet
+      name: sources
+      namespace: benchmark
+      ready: true
+      readyExpr: status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'True')
   inputsFrom:
     - kind: ResourceSetInputProvider
       selector:
@@ -21,27 +28,6 @@ spec:
     labels:
       sharding.fluxcd.io/key: apps
   resourcesTemplate: |
-    apiVersion: source.toolkit.fluxcd.io/v1
-    kind: OCIRepository
-    metadata:
-      name: hrapp-chart
-      namespace: << inputs.provider.namespace >>
-    spec:
-      interval: 1h
-      url: oci://ghcr.io/stefanprodan/charts/podinfo
-      ref:
-        semver: << inputs.version >>
-    ---
-    apiVersion: source.toolkit.fluxcd.io/v1
-    kind: OCIRepository
-    metadata:
-      name: hrapp-chart-canary
-      namespace: << inputs.provider.namespace >>
-    spec:
-      interval: 1h
-      url: oci://ghcr.io/stefanprodan/charts/podinfo
-      ref:
-        semver: << inputs.canaryVersion >>
     <<- range $i := until (int inputs.objects) >>
     <<- $id := add $i 1 >>
     <<- $name := printf "hrapp-%04d" $id >>
@@ -70,11 +56,25 @@ spec:
       driftDetection:
         mode: enabled
       values:
-        replicaCount: 0
+        replicaCount: << inputs.replicaCount | int >>
         serviceAccount:
           enabled: true
         ui:
           message: "<< inputs.ui.message >>"
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: app.fluxcd.io/role
+                      operator: In
+                      values:
+                        - benchmark
+        tolerations:
+          - effect: NoSchedule
+            key: app.fluxcd.io/role
+            operator: Equal
+            value: benchmark
       valuesFrom:
       - kind: ConfigMap
         name: << $name >>

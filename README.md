@@ -28,9 +28,7 @@ Generate 1K HelmReleases and 1K Kustomizations in the benchmark namespace:
 COUNT=1000 make benchmark
 ```
 
-> Rerunning the benchmark will trigger an update of all existing HelmReleases and Kustomizations.
-
-To trigger an update of the first 50 HelmReleases and Kustomizations via OCIRepository semver change, run:
+To trigger an update for all HelmReleases and Kustomizations via OCIRepository semver change, run:
 
 ```shell
 VER=6.9.1 make set-version
